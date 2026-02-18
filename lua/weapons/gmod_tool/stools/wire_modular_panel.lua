@@ -27,6 +27,7 @@ if SERVER then
 	CreateConVar('sbox_maxwire_modular_panels', 20)
 	util.AddNetworkString("umsgRequestModularPanel")
 	util.AddNetworkString("smsgModularPanel")
+	util.AddNetworkString("ModularPanel_UpdatePanel")
 end
 
 TOOL.ClientConVar["fileselect"] = ""
@@ -618,9 +619,17 @@ end
 --------------------------------------------------------------------END Stool panels-----------------------------------------------------------------------
 
 -------------------------------------------------------------------Button event calls------------------------------------------------------------------------
+local function UpdateModularPanel(ply, funcType)
+	if CLIENT then return end
+
+	net.Start("ModularPanel_UpdatePanel")
+		net.WriteUInt(funcType, 4)
+	net.Send(ply)
+end
+
 function ModularPanelAddPanel(player, command, args)
 	if SERVER then
-		player:SendLua('ModularPanelAddPanel()')
+		UpdateModularPanel(player, 1)
 	else
 		modular_panel_current_panel = {widgets = {}}
 		modularPanelRebuildPanel(nil, 2)
@@ -632,23 +641,23 @@ function ModularPanelEditPanel(player, command, args)
 	if SERVER then
 		local fileselect = self:GetClientInfo("fileselect")
 		if (file.Exists("modular_panels/"..fileselect, "DATA")) then
-		local pFile = file.Read("modular_panels/"..fileselect, "DATA") 
+		local pFile = file.Read("modular_panels/"..fileselect, "DATA")
 			local widTable = guiP_fileDataToTable (pFile)
 			sendClientPanel(player, widTable)
 		else
 			Msg("file not found\n") --make say in stool panel
 		end
 
-		--player:SendLua('ModularPanelEditPanel()')
-	//else
-		--modularPanelRebuildPanel(nil, 2)
+		-- UpdateModularPanel(player, 2)
+	-- else
+		-- modularPanelRebuildPanel(nil, 2)
 	end
 end
 
 --browse button (mode)
 function ModularPanelReturn(player, command, args)
 	if SERVER then
-		player:SendLua('ModularPanelReturn()')
+		UpdateModularPanel(player, 3)
 	else
 		modularPanelRebuildPanel(nil, 1)
 	end
@@ -657,9 +666,8 @@ end
 --add a new widget (and go to edit panel)
 function ModularPanelWidgetAdd(player, command, args)
 	if SERVER then
-		player:SendLua('ModularPanelWidgetAdd()')
+		UpdateModularPanel(player, 4)
 	else
-
 		table.insert(modular_panel_current_panel.widgets, {})
 		local newIndex = #modular_panel_current_panel.widgets
 		Msg("new index = "..newIndex.."\n")
@@ -677,7 +685,7 @@ end
 --edit current widget
 function ModularPanelWidgetEdit(player, command, args)
 	if SERVER then
-		player:SendLua('ModularPanelWidgetEdit()')
+		UpdateModularPanel(player, 5)
 	else
 		local editWidget = tonumber(LocalPlayer():GetInfo("wire_modular_panel_widgetselect"))
 		Msg ("opening "..editWidget.."\n")
@@ -692,9 +700,9 @@ end
 --remove current widget
 function ModularPanelWidgetRemove(player, command, args)
 	if SERVER then
-		player:SendLua('ModularPanelWidgetRemove()')
+		UpdateModularPanel(player, 6)
 	else
-		local removeWidget = LocalPlayer():GetInfo("wire_modular_panel_widgetselect") 
+		local removeWidget = LocalPlayer():GetInfo("wire_modular_panel_widgetselect")
 		table.remove(modular_panel_current_panel.widgets, removeWidget)
 		modularPanelRebuildPanel(nil, 2)
 	end
@@ -702,7 +710,7 @@ end
 
 function ModularPanelTogglePreview(player, command, args)
 	if SERVER then
-		player:SendLua('ModularPanelTogglePreview()')
+		UpdateModularPanel(player, 7)
 	else
 		modular_panel_preview_enabled = !modular_panel_preview_enabled
 	end
@@ -711,7 +719,7 @@ end
 --return to main panel editing
 function ModularPanelWidgetReturn(player, command, args)
 	if SERVER then
-		player:SendLua('ModularPanelWidgetReturn()')
+		UpdateModularPanel(player, 8)
 	else
 		if (modular_panel_current_widget_update == tonumber(LocalPlayer():GetInfo("wire_modular_panel_widgettype"))) then
 			wire_modular_panel_widget_message = ""
@@ -749,21 +757,41 @@ end
 
 function ModularPanelWidgetUpdate(player, command, args)
 	if SERVER then
-		player:SendLua('ModularPanelWidgetUpdate()')
+		UpdateModularPanel(player, 9)
 	else
 		modular_panel_current_widget_update = tonumber(LocalPlayer():GetInfo("wire_modular_panel_widgettype"))
 		clientPanelReadWidget()
 		modularPanelRebuildPanel(nil, 3)
-		
+
 		clientPanelUpdateWidget()
 		clientPanelClearParams()
 		clientPanelLoadDefaults()
 	end
 end
 
+if CLIENT then
+	local funcTypes = {
+		ModularPanelAddPanel,
+		ModularPanelEditPanel,
+		ModularPanelReturn,
+		ModularPanelWidgetAdd,
+		ModularPanelWidgetEdit,
+		ModularPanelWidgetRemove,
+		ModularPanelTogglePreview,
+		ModularPanelWidgetReturn,
+		ModularPanelWidgetUpdate,
+	}
+
+	net.Receive("ModularPanel_UpdatePanel", function()
+		local funcType = net.ReadUInt(4)
+		if not funcType or not funcTypes[funcType] then return end
+
+		funcTypes[funcType]()
+	end)
+end
 -------------------------------------------------------------------END Button event calls------------------------------------------------------------------------
 
---Button concommands
+-- Button concommands
 if SERVER then
 	concommand.Add("wire_modular_panel_new", ModularPanelAddPanel)
 	concommand.Add("wire_modular_panel_edit", ModularPanelEditPanel)
@@ -774,10 +802,6 @@ if SERVER then
 	concommand.Add("wire_modular_panel_widgetRemove", ModularPanelWidgetRemove)
 	concommand.Add("wire_modular_panel_widgetTypeUpdate", ModularPanelWidgetUpdate)
 	concommand.Add("wire_modular_panel_togglePreview", ModularPanelTogglePreview)
-
-//else
-
-
 end
 
 

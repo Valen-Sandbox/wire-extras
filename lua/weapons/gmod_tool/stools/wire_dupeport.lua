@@ -49,7 +49,7 @@ if ( SERVER ) then
 
 			return wire_dupeport
 		else
-			ply:SendLua( "GAMEMODE:AddNotify(\"A non-admin cannot spawn a Adv. Dupe Teleporter!\", NOTIFY_GENERIC, 5); surface.PlaySound(\"ambient/water/drip"..math.random(1, 4)..".wav\")" )
+			WireLib.AddNotify(ply, "A non-admin cannot spawn a Adv. Dupe Teleporter!", NOTIFY_ERROR, 5, NOTIFYSOUND_DRIP3)
 			return nil
 		end
 	end

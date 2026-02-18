@@ -218,14 +218,14 @@ function TOOL:RightClick( trace )
 
 	// Can't hook your own HUD Indicators
 	if (ply == trace.Entity:GetPlayer()) then
-		self:GetOwner():SendLua( "GAMEMODE:AddNotify('You cannot hook your own HUD Indicators!', NOTIFY_GENERIC, 7);" )
+		WireLib.AddNotify(ply, "You cannot hook your own HUD Indicators!", NOTIFY_ERROR, 7, NOTIFYSOUND_ERROR1)
 		return false
 	end
 
 	if (!trace.Entity:GetTable():CheckRegister(ply)) then
 		// Has the creator allowed this HUD Indicator to be hooked?
 		if (!trace.Entity:GetTable().AllowHook) then
-			self:GetOwner():SendLua( "GAMEMODE:AddNotify('You are not allowed to hook this HUD Indicator.', NOTIFY_GENERIC, 7);" )
+			WireLib.AddNotify(ply, "You are not allowed to hook this HUD Indicator.", NOTIFY_ERROR, 7, NOTIFYSOUND_ERROR1)
 			return false
 		end
 
@@ -245,11 +245,12 @@ function TOOL:Reload( trace )
 
 	if (CLIENT) then return true end
 
+	local ply = self:GetOwner()
 	local iNum = self:NumObjects()
 
 	if (iNum == 0) then
 		if (trace.Entity:GetClass() != "gmod_wire_adv_hudindicator") then
-			self:GetOwner():SendLua( "GAMEMODE:AddNotify('You must select a HUD Indicator to link first.', NOTIFY_GENERIC, 7);" )
+			WireLib.AddNotify(ply, "You must select a HUD Indicator to link first.", NOTIFY_ERROR, 7, NOTIFYSOUND_ERROR1)
 			return false
 		end
 
@@ -259,7 +260,7 @@ function TOOL:Reload( trace )
 	elseif (iNum == 1) then
 		if (trace.Entity != self:GetEnt(1)) then
 			if (!string.find(trace.Entity:GetClass(), "prop_vehicle_")) then
-				self:GetOwner():SendLua( "GAMEMODE:AddNotify('HUD Indicators can only be linked to vehicles.', NOTIFY_GENERIC, 7);" )
+				WireLib.AddNotify(ply, "HUD Indicators can only be linked to vehicles.", NOTIFY_ERROR, 7, NOTIFYSOUND_ERROR1)
 				self:ClearObjects()
 				self:SetStage(0)
 				return false
@@ -269,7 +270,7 @@ function TOOL:Reload( trace )
 			local bool = ent:GetTable():LinkVehicle(trace.Entity)
 
 			if (!bool) then
-				self:GetOwner():SendLua( "GAMEMODE:AddNotify('Could not link HUD Indicator!', NOTIFY_GENERIC, 7);" )
+				WireLib.AddNotify(ply, "Could not link HUD Indicator!", NOTIFY_ERROR, 7, NOTIFYSOUND_ERROR1)
 				return false
 			end
 		else

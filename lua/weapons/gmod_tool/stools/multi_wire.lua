@@ -84,7 +84,7 @@ function TOOL:LeftClick( trace )
 
 			Wire_Link_Cancel(self:GetOwner():UniqueID())
 
-			self:GetOwner():SendLua( "GAMEMODE:AddNotify('Wire source invalid!', NOTIFY_GENERIC, 7);" )
+			WireLib.AddNotify(self:GetOwner(), "Wire source invalid!", NOTIFY_ERROR, 7, NOTIFYSOUND_ERROR1)
 			self.inputtbl = {}
 			self.enttbl = {}
 			return

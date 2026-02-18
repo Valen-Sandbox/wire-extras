@@ -29,7 +29,7 @@ TOOL.CurrentOutput = nil
 TOOL.Outputs = nil
 
 local function PrintError( player, arg1, arg2, arg3, arg4 )
-	player:SendLua("GAMEMODE:AddNotify('Item "..arg1.." : "..arg2..arg3..arg4.."', NOTIFY_GENERIC ,5); surface.PlaySound('ambient/water/drip3.wav');")
+	WireLib.AddNotify(player, "Item " .. arg1 .. " : " .. arg2 .. arg3 .. arg4, NOTIFY_ERROR, 5, NOTIFYSOUND_DRIP3)
 end
 
 function TOOL:LeftClick( trace )

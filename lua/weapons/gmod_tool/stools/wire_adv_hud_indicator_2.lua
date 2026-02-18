@@ -6,13 +6,13 @@ TOOL.ConfigName		= ""
 cleanup.Register( "wire_adv_hud_indicators" )
 
 if ( CLIENT ) then
-    language.Add( "Tool_wire_adv_hud_indicator_2_name", "Adv. HUD Indicator 2 ! (Wire)" )
-    language.Add( "Tool_wire_adv_hud_indicator_2_desc", "Spawns an Adv. HUD Indicator 2 for use with the wire system." )
-    language.Add( "Tool_wire_adv_hud_indicator_2_0", "Primary: Create/Update Hud Indicator Secondary: Hook/Unhook a HUD Indicator" )
-	language.Add( "Tool_wire_adv_hud_indicator_2_1", "Now use Reload on a vehicle to link this HUD Indicator to it, or on the same HUD Indicator to unlink it" )
-	
-	language.Add( "Tool_wire_adv_hud_menu_showEditor", "Open the HML Editor" )
-	
+	language.Add( "tool.wire_adv_hud_indicator_2.name", "Adv. HUD Indicator 2 ! (Wire)" )
+	language.Add( "tool.wire_adv_hud_indicator_2.desc", "Spawns an Adv. HUD Indicator 2 for use with the wire system." )
+	language.Add( "tool.wire_adv_hud_indicator_2.0", "Primary: Create/Update Hud Indicator Secondary: Hook/Unhook a HUD Indicator" )
+	language.Add( "tool.wire_adv_hud_indicator_2.1", "Now use Reload on a vehicle to link this HUD Indicator to it, or on the same HUD Indicator to unlink it" )
+
+	language.Add( "tool.wire_adv_hud_menu_showEditor", "Open the HML Editor" )
+
 	language.Add( "undone_gmod_wire_hud_indicator_2", "Undone Wire Adv. HUD Indicator 2" )
 end
 
@@ -54,8 +54,9 @@ function TOOL:LeftClick( trace )
 	player:AddCleanup( "wire_adv_hud_indicators", ent )
 
 	//-- Now that we have an entity, invoke its owner to send us code!
-	player:SendLua("HUD2_uploadCode(" .. ent:EntIndex() .. ")")
-
+	net.Start("HMLUpload")
+		net.WriteUInt(ent:EntIndex(), MAX_EDICT_BITS)
+	net.Send(player)
 
 	return true
 end
@@ -98,13 +99,13 @@ end
 function TOOL:RightClick( trace )
 	if trace.Entity:IsPlayer() then return false end
 	local player = self:GetOwner()
-	
+
 	if (trace.Entity && trace.Entity:IsValid() && trace.Entity:GetClass() == "gmod_wire_hud_indicator_2") then
 		local sent = trace.Entity
 		sent:ToggleHooked( player )
 		return true
 	end
-	
+
 	return false
 end
 
@@ -113,17 +114,17 @@ function TOOL:Reload( trace )
 
 	if (!trace.Entity || !trace.Entity:IsValid()) then return false end
 	if trace.Entity:IsPlayer() then return false end
-	
+
 	if (CLIENT) then return true end
-	
+
 	local iNum = self:NumObjects()
-	
+
 	if (iNum == 0) then
 		if (trace.Entity:GetClass() != "gmod_wire_hud_indicator_2") then
 			WireLib.AddNotify(self:GetOwner(), "You must select a HUD Indicator to link first.", NOTIFY_GENERIC, 7)
 			return false
 		end
-		
+
 		local Phys = trace.Entity:GetPhysicsObjectNum( trace.PhysicsBone )
 		self:SetObject( 1, trace.Entity, trace.HitPos, Phys, trace.PhysicsBone, trace.HitNormal )
 		self:SetStage(1)
@@ -135,23 +136,23 @@ function TOOL:Reload( trace )
 				self:SetStage(0)
 				return false
 			end
-			
+
 			local ent = self:GetEnt(1)
 			local bool = ent:GetTable():LinkVehicle(trace.Entity)
-			
+
 			if (!bool) then
 				WireLib.AddNotify(self:GetOwner(), "Could not link HUD Indicator!", NOTIFY_GENERIC, 7)
 				return false
 			end
-			
+
 			WireLib.AddNotify(self:GetOwner(), "HUD Linked!", NOTIFY_GENERIC, 5)
 		else
 			// Unlink HUD Indicator from this vehicle
 			trace.Entity:GetTable():UnLinkVehicle()
-			
+
 			WireLib.AddNotify(self:GetOwner(), "HUD UnLinked!", NOTIFY_GENERIC, 5)
 		end
-		
+
 		self:ClearObjects()
 		self:SetStage(0)
 	end
@@ -168,20 +169,20 @@ end
 
 function TOOL.BuildCPanel( panel )
 	panel:ClearControls()
-	panel:AddControl("Header", { Text = "#Tool_wire_adv_hud_menu_name", Description = "#Tool_wire_adv_hud_menu_desc" })
+	panel:AddControl("Header", { Text = "#tool.wire_adv_hud_indicator_2.name", Description = "#tool.wire_adv_hud_indicator_2.desc" })
 
 	panel:AddControl("Label", { Text = "HML is loaded to the entity from whatever is open in the editor."})
 
 	panel:AddControl("Button", {
-			Label = "#Tool_wire_adv_hud_menu_showEditor",
+			Label = "#tool.wire_adv_hud_menu_showEditor",
 			Text = "Open Editor",
 			Command = "openH2Editor"
 		})
-	
+
 	panel:AddControl("Label", {
 		Text = ""
 	})
-	
+
 	panel:AddControl("CheckBox", {
 		Label = "Show stats?",
 		Command = "HUD2_showStats"
